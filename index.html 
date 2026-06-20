@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft - 主菜单</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            image-rendering: pixelated;
+        }
+
+        body {
+            font-family: 'Minecraft', 'Courier New', monospace;
+            overflow: hidden;
+            background: #1a1a1a;
+            user-select: none;
+        }
+
+        /* 全景背景 */
+        .panorama-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://raw.githubusercontent.com/misode/mcmeta/main/assets/minecraft/textures/gui/title/background/panorama_0.png');
+            background-size: cover;
+            animation: panorama 60s linear infinite;
+            z-index: -2;
+        }
+
+        @keyframes panorama {
+            0% { background-position: 0% center; }
+            100% { background-position: 100% center; }
+        }
+
+        /* 遮罩层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: -1;
+        }
+
+        /* 主菜单容器 */
+        .main-menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Minecraft Logo */
+        .logo {
+            width: 400px;
+            margin-bottom: 40px;
+            filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.8));
+        }
+
+        /* 按钮样式 - 方形像素风 */
+        .mc-button {
+            width: 300px;
+            height: 50px;
+            margin: 8px 0;
+            background: #7d7d7d;
+            border: 3px solid #000;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+            position: relative;
+        }
+
+        .mc-button:hover {
+            background: #5a9e34;
+            border-color: #fff;
+        }
+
+        .mc-button:active {
+            transform: translateY(2px);
+        }
+
+        /* 版本信息 */
+        .version {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            color: #888;
+            font-size: 12px;
+        }
+
+        /* 版权信息 */
+        .copyright {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            color: #888;
+            font-size: 12px;
+        }
+
+        /* 子菜单弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #c6c6c6;
+            border: 4px solid #000;
+            padding: 30px;
+            width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            color: #000;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 1px 1px 0 #fff;
+        }
+
+        .modal-button {
+            width: 200px;
+            height: 40px;
+            margin: 5px;
+            background: #7d7d7d;
+            border: 3px solid #000;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-button:hover {
+            background: #5a9e34;
+        }
+
+        .input-field {
+            width: 100%;
+            height: 40px;
+            margin: 10px 0;
+            background: #000;
+            border: 3px solid #fff;
+            color: #fff;
+            padding: 0 10px;
+            font-size: 16px;
+        }
+
+        .world-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+            background: #000;
+            border: 3px solid #555;
+        }
+
+        .world-item {
+            padding: 10px;
+            color: #fff;
+            border-bottom: 2px solid #333;
+            cursor: pointer;
+        }
+
+        .world-item:hover {
+            background: #333;
+        }
+
+        .world-item.selected {
+            background: #5a9e34;
+        }
+
+        .slider-container {
+            margin: 15px 0;
+        }
+
+        .slider-label {
+            color: #000;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .slider {
+            width: 100%;
+            height: 20px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #000;
+            border: 2px solid #fff;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #7d7d7d;
+            border: 2px solid #fff;
+            cursor: pointer;
+        }
+
+        .checkbox-container {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            color: #000;
+        }
+
+        .checkbox-container input {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            accent-color: #5a9e34;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* 商店物品网格 */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .shop-item {
+            background: #8b8b8b;
+            border: 3px solid #000;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .shop-item:hover {
+            background: #5a9e34;
+        }
+
+        .item-icon {
+            width: 40px;
+            height: 40px;
+            background: #555;
+            margin: 0 auto 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        /* 选项菜单 */
+        .option-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            color: #000;
+            padding: 5px 0;
+            border-bottom: 1px solid #888;
+        }
+
+        .option-value {
+            color: #fff;
+            background: #000;
+            padding: 2px 10px;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #7d7d7d;
+            border: 2px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景 -->
+    <div class="panorama-bg"></div>
+    <div class="overlay"></div>
+
+    <!-- 主菜单 -->
+    <div class="main-menu" id="mainMenu">
+        <img src="https://raw.githubusercontent.com/misode/mcmeta/main/assets/minecraft/textures/gui/title/minecraft.png" alt="Minecraft" class="logo" onerror="this.style.display='none'; document.getElementById('logoText').style.display='block'">
+        <h1 id="logoText" style="display:none; color:#fff; font-size:48px; margin-bottom:40px; text-shadow:4px 4px 0 #000;">MINECRAFT</h1>
+        
+        <button class="mc-button" onclick="showSinglePlayer()">单人游戏</button>
+        <button class="mc-button" onclick="showMultiPlayer()">多人游戏</button>
+        <button class="mc-button" onclick="showShop()">方块商城</button>
+        <button class="mc-button" onclick="showOptions()">选项...</button>
+        <button class="mc-button" onclick="quitGame()">退出游戏</button>
+    </div>
+
+    <!-- 单人游戏菜单 -->
+    <div class="modal" id="singlePlayerModal">
+        <div class="modal-content">
+            <div class="modal-title">选择世界</div>
+            <div class="world-list" id="worldList">
+                <div class="world-item selected" onclick="selectWorld(this)">
+                    <div>新的世界</div>
+                    <div style="font-size:12px; color:#888;">创造模式 | 今天</div>
+                </div>
+            </div>
+            <div class="button-row">
+                <button class="modal-button" onclick="showCreateWorld()">创建新的世界</button>
+                <button class="modal-button" onclick="enterWorld()">进入选中的世界</button>
+            </div>
+            <div class="button-row">
+                <button class="modal-button" onclick="editWorld()">编辑</button>
+                <button class="modal-button" onclick="deleteWorld()">删除</button>
+                <button class="modal-button" onclick="closeModal('singlePlayerModal')">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建世界菜单 -->
+    <div class="modal" id="createWorldModal">
+        <div class="modal-content">
+            <div class="modal-title">创建新的世界</div>
+            <label style="color:#000;">世界名称：</label>
+            <input type="text" class="input-field" id="worldName" value="新的世界" placeholder="输入世界名称">
+            
+            <div class="option-row">
+                <span>游戏模式</span>
+                <button class="modal-button" style="width:120px;" id="gameMode" onclick="toggleGameMode()">生存模式</button>
+            </div>
+            
+            <div class="option-row">
+                <span>难度</span>
+                <button class="modal-button" style="width:120px;" id="difficulty" onclick="toggleDifficulty()">普通</button>
+            </div>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="allowCheats">
+                <label for="allowCheats">允许作弊</label>
+            </div>
+            
+            <div class="option-row">
+                <span>添加模组</span>
+                <button class="modal-button" style="width:120px;" onclick="showModList()">选择模组</button>
+            </div>
+            
+            <div class="button-row">
+                <button class="modal-button" onclick="createWorld()">创建世界</button>
+                <button class="modal-button" onclick="closeModal('createWorldModal'); showSinglePlayer()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 多人游戏菜单 -->
+    <div class="modal" id="multiPlayerModal">
+        <div class="modal-content">
+            <div class="modal-title">多人游戏</div>
+            <div class="world-list" id="serverList">
+                <div class="world-item" onclick="selectServer(this)">
+                    <div>本地服务器 #1</div>
+                    <div style="font-size:12px; color:#888;">1.20.1 | 0/20 玩家</div>
+                </div>
+                <div class="world-item" onclick="selectServer(this)">
+                    <div>本地服务器 #2</div>
+                    <div style="font-size:12px; color:#888;">1.20.1 | 3/20 玩家</div>
+                </div>
+            </div>
+            <div class="button-row">
+                <button class="modal-button" onclick="showDirectConnect()">直接连接</button>
+                <button class="modal-button" onclick="showAddServer()">添加服务器</button>
+            </div>
+            <div class="button-row">
+                <button class="modal-button" onclick="joinServer()">加入服务器</button>
+                <button class="modal-button" onclick="refreshServers()">刷新</button>
+                <button class="modal-button" onclick="closeModal('multiPlayerModal')">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 方块商城 -->
+    <div class="modal" id="shopModal">
+        <div class="modal-content" style="width:600px;">
+            <div class="modal-title">方块商城</div>
+            <div class="shop-grid">
+                <div class="shop-item" onclick="buyItem('钻石剑')">
+                    <div class="item-icon">⚔️</div>
+                    <div>钻石剑</div>
+                    <div style="color:#0f0;">100 绿宝石</div>
+                </div>
+                <div class="shop-item" onclick="buyItem('钻石镐')">
+                    <div class="item-icon">⛏️</div>
+                    <div>钻石镐</div>
+                    <div style="color:#0f0;">80 绿宝石</div>
+                </div>
+                <div class="shop-item" onclick="buyItem('钻石斧')">
+                    <div class="item-icon">🪓</div>
+                    <div>钻石斧</div>
+                    <div style="color:#0f0;">80 绿宝石</div>
+                </div>
+                <div class="shop-item" onclick="buyItem('钻石锄')">
+                    <div class="item-icon">🔧</div>
+                    <div>钻石锄</div>
+                    <div style="color:#0f0;">60 绿宝石</div>
+                </div>
+                <div class="shop-item" onclick="buyItem('铁剑')">
+                    <div class="item-icon">⚔️</div>
+                    <div>铁剑</div>
+                    <div style="color:#0f0;">50 绿宝石</div>
+                </div>
+                <div class="shop-item" onclick="buyItem('铁镐')">
+                    <div class="item-icon">⛏️</div>
+                    <div>铁镐</div>
+                    <div style="color:#0f0;">40 绿宝石</div>
+                </div>
+                <div class="shop-item" onclick="buyItem('木剑')">
+                    <div class="item-icon">🗡️</div>
+                    <div>木剑</div>
+                    <div style="color:#0f0;">10 绿宝石</div>
+                </div>
+                <div class="shop-item" onclick="buyItem('弓箭')">
+                    <div class="item-icon">🏹</div>
+                    <div>弓箭</div>
+                    <div style="color:#0f0;">30 绿宝石</div>
+                </div>
+                <div class="shop-item" onclick="buyItem('钻石块')">
+                    <div class="item-icon">💎</div>
+                    <div>钻石块</div>
+                    <div style="color:#0f0;">500 绿宝石</div>
+                </div>
+                <div class="shop-item" onclick="buyItem('金块')">
+                    <div class="item-icon">🟨</div>
+                    <div>金块</div>
+                    <div style="color:#0f0;">300 绿宝石</div>
+                </div>
+                <div class="shop-item" onclick="buyItem('铁块')">
+                    <div class="item-icon">⬜</div>
+                    <div>铁块</div>
+                    <div style="color:#0f0;">200 绿宝石</div>
+                </div>
+                <div class="shop-item" onclick="buyItem('草方块')">
+                    <div class="item-icon">🟩</div>
+                    <div>草方块 x64</div>
+                    <div style="color:#0f0;">5 绿宝石</div>
+                </div>
+            </div>
+            <div class="button-row">
+                <button class="modal-button" onclick="closeModal('shopModal')">返回</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 选项菜单 -->
+    <div class="modal" id="optionsModal">
+        <div class="modal-content">
+            <div class="modal-title">游戏选项</div>
+            
+            <div class="slider-container">
+                <label class="slider-label">音乐： <span id="musicValue">50%</span></label>
+                <input type="range" class="slider" min="0" max="100" value="50" oninput="updateSlider('musicValue', this.value)">
+            </div>
+            
+            <div class="slider-container">
+                <label class="slider-label">音效： <span id="soundValue">50%</span></label>
+                <input type="range" class="slider" min="0" max="100" value="50" oninput="updateSlider('soundValue', this.value)">
+            </div>
+            
+            <div class="option-row">
+                <span>视野距离</span>
+                <span class="option-value">12 区块</span>
+            </div>
+            
+            <div class="option-row">
+                <span>亮度</span>
+                <span class="option-value">明亮</span>
+            </div>
+            
+            <div class="option-row">
+                <span>粒子效果</span>
+                <span class="option-value">全部</span>
+            </div>
+            
+            <div class="option-row">
+                <span>视角摇晃</span>
+                <span class="option-value">开</span>
+            </div>
+            
+            <div class="option-row">
+                <span>云</span>
+                <span class="option-value">开</span>
+            </div>
+            
+            <div class="button-row">
+                <button class="modal-button" onclick="closeModal('optionsModal')">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 版本信息 -->
+    <div class="version">Minecraft 1.20.1</div>
+    <div class="copyright">版权所有 © Mojang AB</div>
+
+    <script>
+        let selectedWorld = null;
+        let selectedServer = null;
+        let gameModeIndex = 0;
+        let difficultyIndex = 0;
+        const gameModes = ['生存模式', '创造模式', '冒险模式', '旁观模式'];
+        const difficulties = ['和平', '简单', '普通', '困难'];
+
+        function showSinglePlayer() {
+            closeAllModals();
+            document.getElementById('singlePlayerModal').classList.add('active');
+        }
+
+        function showMultiPlayer() {
+            closeAllModals();
+            document.getElementById('multiPlayerModal').classList.add('active');
+        }
+
+        function showShop() {
+            closeAllModals();
+            document.getElementById('shopModal').classList.add('active');
+        }
+
+        function showOptions() {
+            closeAllModals();
+            document.getElementById('optionsModal').classList.add('active');
+        }
+
+        function showCreateWorld() {
+            closeModal('singlePlayerModal');
+            document.getElementById('createWorldModal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+        }
+
+        function selectWorld(element) {
+            document.querySelectorAll('.world-item').forEach(item => item.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedWorld = element;
+        }
+
+        function selectServer(element) {
+            document.querySelectorAll('#serverList .world-item').forEach(item => item.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedServer = element;
+        }
+
+        function toggleGameMode() {
+            gameModeIndex = (gameModeIndex + 1) % gameModes.length;
+            document.getElementById('gameMode').textContent = gameModes[gameModeIndex];
+        }
+
+        function toggleDifficulty() {
+            difficultyIndex = (difficultyIndex + 1) % difficulties.length;
+            document.getElementById('difficulty').textContent = difficulties[difficultyIndex];
+        }
+
+        function createWorld() {
+            const name = document.getElementById('worldName').value;
+            alert(`正在创建世界：${name}\n模式：${gameModes[gameModeIndex]}\n难度：${difficulties[difficultyIndex]}`);
+            closeModal('createWorldModal');
+        }
+
+        function enterWorld() {
+            if (selectedWorld) {
+                alert('正在进入世界...');
+            } else {
+                alert('请先选择一个世界！');
+            }
+        }
+
+        function editWorld() {
+            alert('编辑世界功能');
+        }
+
+        function deleteWorld() {
+            if (confirm('确定要删除这个世界吗？此操作不可撤销！')) {
+                if (selectedWorld) {
+                    selectedWorld.remove();
+                    selectedWorld = null;
+                }
+            }
+        }
+
+        function joinServer() {
+            if (selectedServer) {
+                alert('正在连接服务器...');
+            } else {
+                alert('请先选择一个服务器！');
+            }
+        }
+
+        function refreshServers() {
+            alert('正在刷新服务器列表...');
+        }
+
+        function showDirectConnect() {
+            const ip = prompt('请输入服务器地址：');
+            if (ip) alert(`正在连接 ${ip}...`);
+        }
+
+        function showAddServer() {
+            const name = prompt('服务器名称：');
+            const ip = prompt('服务器地址：');
+            if (name && ip) {
+                alert(`已添加服务器：${name} (${ip})`);
+            }
+        }
+
+        function showModList() {
+            alert('模组列表功能（待实现）');
+        }
+
+        function buyItem(itemName) {
+            alert(`已购买：${itemName}`);
+        }
+
+        function updateSlider(id, value) {
+            document.getElementById(id).textContent = value + '%';
+            if (value === '0') {
+                document.getElementById(id).textContent = '0% (静音)';
+            }
+        }
+
+        function quitGame() {
+            if (confirm('确定要退出游戏吗？')) {
+                window.close();
+                // 如果window.close()不起作用
+                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;color:#fff;font-size:24px;">游戏已退出</div>';
+            }
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAllModals();
+            }
+        });
+    </script>
+</body>
+</html>
